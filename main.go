@@ -11,6 +11,13 @@ import (
 
 var db *sql.DB
 
+type Game struct {
+	ID        int64
+	Title     string
+	Developer string
+	Price     float32
+}
+
 func main() {
 	cfg := mysql.Config{
 		User:                 os.Getenv("DBUSER"),
@@ -33,4 +40,26 @@ func main() {
 	}
 	fmt.Println("Connected!")
 
+}
+
+func gamesByDeveloper(developer string) ([]Game, error) {
+	var games []Game
+
+	rows, err := db.Query("SELECT * FROM game WHERE developer = ?", developer)
+	if err != nil {
+		return nil, fmt.Errorf("gamesByDeveloper %q: %v", developer, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var game Game
+		if err := rows.Scan(&game.ID, &game.Title, &game.Developer, &game.Price); err != nil {
+			return nil, fmt.Errorf("gamesByDeveloper %q: %v", developer, err)
+		}
+		games = append(games, game)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("gameByDeveloper %q: %v", developer, err)
+	}
+	return games, nil
 }
