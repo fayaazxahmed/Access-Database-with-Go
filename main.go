@@ -40,12 +40,18 @@ func main() {
 	}
 	fmt.Println("Connected!")
 
+	games, err := gamesByDeveloper("EA games")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("games found: %v\n", games)
+
 }
 
 func gamesByDeveloper(developer string) ([]Game, error) {
 	var games []Game
 
-	rows, err := db.Query("SELECT * FROM game WHERE developer = ?", developer)
+	rows, err := db.Query("SELECT * FROM games WHERE developer = ?", developer)
 	if err != nil {
 		return nil, fmt.Errorf("gamesByDeveloper %q: %v", developer, err)
 	}
