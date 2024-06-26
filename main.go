@@ -40,17 +40,26 @@ func main() {
 	}
 	fmt.Println("Connected!")
 
-	developer_games, err := gamesByDeveloper("EA games")
+	var dev = "EA games"
+	developer_games, err := gamesByDeveloper(dev)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("games found: %v\n", developer_games)
+	fmt.Printf("games developed by %v: %v\n", dev, developer_games)
 
-	game, err := gamesByID(4)
+	var ID int64 = 4
+	game, err := gamesByID(ID)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("games found: %v\n", game)
+	fmt.Printf("games found with ID number %v: %v\n", ID, game)
+
+	var Price float32 = 20
+	games_in_budget, err := sortByMaxPrice(Price)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("games found under $%v: %v\n", Price, games_in_budget)
 
 }
 
@@ -89,4 +98,26 @@ func gamesByID(id int64) (Game, error) {
 	}
 	return game, nil
 
+}
+
+func sortByMaxPrice(price float32) ([]Game, error) {
+	var within_budget []Game
+
+	rows, err := db.Query("SELECT * FROM games WHERE PRICE <= ?", price)
+	if err != nil {
+		return nil, fmt.Errorf("sortByMaxPrice %v: %v", price, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var game Game
+		if err := rows.Scan(&game.ID, &game.Title, &game.Developer, &game.Price); err != nil {
+			return nil, fmt.Errorf("sortByMaxPrice %v: %v", price, err)
+		}
+		within_budget = append(within_budget, game)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("sortByMaxPrice %v: %v", price, err)
+	}
+	return within_budget, nil
 }
